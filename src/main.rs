@@ -16,16 +16,52 @@ fn main() {
 
     partioning(DRIVE);
     formating(DRIVE);
+    mounting(DRIVE);
 }
 
 /// This function will deal with mounting all the drives
 fn mounting(drive: &str) {
-    let efi_part = [drive, "1"].concat();
-    Command::new("mount")
+    // Mounting the root partition
+    let root_part = [drive, "3"].concat();
+    let status = Command::new("mount")
+        .args([root_part, "/mnt".to_owned()])
+        .status()
+        .expect("Failed to start mount");
 
+    // This repeats a lot should probably make it a function
+    // Or change it to something else
+    if status.success() {
+        println!("Success mounting root")
+    } else {
+        println!("Failure mounting root");
+        exit(-1)
+    }
+
+    let efi_part = [drive, "1"].concat();
+    let status = Command::new("mount")
+        .args(["--mkdir", efi_part.as_str(), "/mnt/boot"])
+        .status()
+        .expect("Failed to start mount");
+
+    if status.success() {
+        println!("Success mounting efi")
+    } else {
+        println!("Failure mounting efi");
+        exit(-1)
+    }
 
     let swap_part = [drive, "2"].concat();
-    let root_part = [drive, "3"].concat();
+    let status = Command::new("swapon")
+        .arg(swap_part)
+        .status()
+        .expect("Failed to start swapon");
+
+    if status.success() {
+        println!("Success enabling swap")
+    } else {
+        println!("Failure enabling swap");
+        exit(-1)
+    }
 }
 
 // Works
@@ -63,7 +99,7 @@ fn formating(drive: &str) {
     // Formatting root partition
     let root_part = [drive, "3"].concat();
     let status = Command::new("mkfs.btrfs")
-        .arg(root_part)
+        .args(["-f", root_part.as_str()])
         .status()
         .expect("Error running mkfs.btrfs");
 
