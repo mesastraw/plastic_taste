@@ -17,6 +17,7 @@ fn main() {
 }
 
 // Works
+// Handle errors better in the future
 /// This function will format the partitions
 fn formating() {
     // Formatting EFI partition
@@ -63,6 +64,7 @@ fn formating() {
 }
 
 // Works
+// Handle errors better in the future
 /// This function partitions the drives
 fn partioning() {
     let efi_start = 1;
