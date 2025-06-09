@@ -1,6 +1,6 @@
 use std::{
     io::{self, Write},
-    process::Command,
+    process::{Command, exit},
 };
 
 // The main drive
@@ -12,23 +12,58 @@ fn main() {
     println!("Welcome to plastic taste");
     // Here the user should be able to select a drive
 
-    // partioning();
+    partioning();
+    formating();
 }
 
+// Works
 /// This function will format the partitions
 fn formating() {
-    let mut efi_part = DRIVE.to_owned();
-    efi_part.push_str("1"); // /dev/vda1
-
-    // For the EFI partition
+    // Formatting EFI partition
+    let efi_part = [DRIVE, "1"].concat();
     let status = Command::new("mkfs.fat")
         .args(["-F", "32", efi_part.as_str()])
         .status()
-        .expect("mkfs.fat faild to format");
+        .expect("error starting mkfs.fat");
+
+    if status.success() {
+        println!("Formatting efi partition suceeded")
+    } else {
+        println!("Formmatting efi failed");
+        exit(-1)
+    }
+
+    // Formatting swap partition
+    let swap_part = [DRIVE, "2"].concat();
+    let status = Command::new("mkswap")
+        .arg(swap_part)
+        .status()
+        .expect("error running mkswap");
+
+    if status.success() {
+        println!("Formatting swap partition suceeded")
+    } else {
+        println!("Formmatting efi failed");
+        exit(-1)
+    }
+
+    // Formatting root partition
+    let root_part = [DRIVE, "3"].concat();
+    let status = Command::new("mkfs.btrfs")
+        .arg(root_part)
+        .status()
+        .expect("Error running mkfs.btrfs");
+
+    if status.success() {
+        println!("Formatting root partition suceeded")
+    } else {
+        println!("Formmatting root failed");
+        exit(-1)
+    }
 }
 
+// Works
 /// This function partitions the drives
-/// This function works
 fn partioning() {
     let efi_start = 1;
     let efi_end = efi_start + EFI_SIZE;
