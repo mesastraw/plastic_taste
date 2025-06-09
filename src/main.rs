@@ -4,6 +4,8 @@ use std::{
 };
 
 // The main drive
+// This wont be a const in the future
+// User will be a able to choose a drive later on
 const DRIVE: &str = "/dev/vda";
 const EFI_SIZE: u32 = 4096; // 4 GiB in Mib
 const SWAP_SIZE: u32 = 32768; // 32 Gib in Mib
@@ -12,16 +14,26 @@ fn main() {
     println!("Welcome to plastic taste");
     // Here the user should be able to select a drive
 
-    partioning();
-    formating();
+    partioning(DRIVE);
+    formating(DRIVE);
+}
+
+/// This function will deal with mounting all the drives
+fn mounting(drive: &str) {
+    let efi_part = [drive, "1"].concat();
+    Command::new("mount")
+
+
+    let swap_part = [drive, "2"].concat();
+    let root_part = [drive, "3"].concat();
 }
 
 // Works
 // Handle errors better in the future
 /// This function will format the partitions
-fn formating() {
+fn formating(drive: &str) {
     // Formatting EFI partition
-    let efi_part = [DRIVE, "1"].concat();
+    let efi_part = [drive, "1"].concat();
     let status = Command::new("mkfs.fat")
         .args(["-F", "32", efi_part.as_str()])
         .status()
@@ -35,7 +47,7 @@ fn formating() {
     }
 
     // Formatting swap partition
-    let swap_part = [DRIVE, "2"].concat();
+    let swap_part = [drive, "2"].concat();
     let status = Command::new("mkswap")
         .arg(swap_part)
         .status()
@@ -49,7 +61,7 @@ fn formating() {
     }
 
     // Formatting root partition
-    let root_part = [DRIVE, "3"].concat();
+    let root_part = [drive, "3"].concat();
     let status = Command::new("mkfs.btrfs")
         .arg(root_part)
         .status()
@@ -66,7 +78,7 @@ fn formating() {
 // Works
 // Handle errors better in the future
 /// This function partitions the drives
-fn partioning() {
+fn partioning(drive: &str) {
     let efi_start = 1;
     let efi_end = efi_start + EFI_SIZE;
 
@@ -75,7 +87,7 @@ fn partioning() {
 
     let root_start = swap_end;
 
-    println!("WARNING!!. Your about to WIPE ALL DATA on the selected drive: {DRIVE}");
+    println!("WARNING!!. Your about to WIPE ALL DATA on the selected drive: {drive}");
     println!("Are you sure you want to continue?(y | n): ");
     io::stdout().flush().unwrap();
 
@@ -91,7 +103,7 @@ fn partioning() {
             // Very long args fix this later to make it look nicer?
             let status = Command::new("parted")
                 .args([
-                    DRIVE,
+                    drive,
                     "--script",
                     "mklabel",
                     "gpt",
@@ -135,6 +147,7 @@ fn partioning() {
         }
         _ => {
             println!("Aborted. You must type 'y' or 'yes' to continue.");
+            exit(0)
         }
     }
 }
